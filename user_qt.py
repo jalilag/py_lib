@@ -4,8 +4,14 @@ import math
 from PyQt5.QtWidgets import QApplication, QScrollArea, QMainWindow,QSizePolicy, QPushButton,QComboBox,QSlider, QStyle, QMessageBox,QLineEdit,QWidget,QLabel,QDesktopWidget,QAction,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QGridLayout,QGraphicsColorizeEffect,QGroupBox,QRadioButton,QCheckBox
 from PyQt5.QtGui import QIcon, QPixmap,QPainter,QPalette,QColor,QBrush,QPen
 from PyQt5.QtCore import Qt,QObject,QSize,QPropertyAnimation,QRect
+usty = None
+utxt = None
+ulang = None
+
 
 def txtBox(title,corpus,qtype="info",parent=None):
+	if title in utxt: title = utxt[title][ulang]
+	if corpus in utxt: corpus = utxt[corpus][ulang]
 	if qtype == "about":
 		QMessageBox.about(parent,title,corpus)
 	if qtype == "critical":
@@ -23,13 +29,26 @@ def txtBox(title,corpus,qtype="info",parent=None):
 	if qtype == "warning":
 		QMessageBox.warning(parent,title,corpus,QMessageBox.Ok)
 
+
 class UQobject(QObject):
-	def __init__(self,name_id = None,parent=None):
+	def __init__(self,*args,**kwargs):
 		super().__init__()
-		if name_id is not None:
-			self.setObjectName(name_id)
-		if parent is not None:
-			self.setParent(parent)
+		kwargs = self._args(*args,**kwargs)
+		name_id = kwargs.get("name_id",None)
+		parent = kwargs.get("parent",None)
+		if name_id is not None: self.setObjectName(name_id)
+		if parent is not None: self.setParent(parent)
+
+	def _args(*args,**kwargs):
+		if "name_id" not in kwargs: 
+			if len(args) > 1: kwargs["name_id"] = args[1]
+		if "name_id" in kwargs and kwargs["name_id"] in usty:  
+			kwargs.update(usty[kwargs["name_id"]])
+		if "title" in kwargs:
+			if kwargs["title"] in utxt:
+				if ulang in utxt[kwargs["title"]]: 
+					kwargs["title"] = utxt[kwargs["title"]][ulang]
+		return kwargs
 
 	def get_child_by_name(self,name_id):
 		for i in self.children():
@@ -38,9 +57,10 @@ class UQobject(QObject):
 		return None			
 
 
+
 class UQapplication(QApplication,UQobject):
-	def __init__(self,name_id = None,parent=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 
 
@@ -48,13 +68,14 @@ class UQapp(QMainWindow,UQobject):
 	"""
 		Classe Fenetre principale
 	"""
-	def __init__(self,name_id = None,parent=None,title=None):
-		super().__init__()
-		if title is not None:
-			self.setWindowTitle(title)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		title = kwargs.get("title",None)
+		if title is not None: self.setWindowTitle(title)
 		self.want_to_close = None
 
-		# self.show()
+
 	def status_txt(self,status_txt):
 		"""
 			Message dans la barre de status
@@ -86,8 +107,6 @@ class UQapp(QMainWindow,UQobject):
 			with open(val+"/"+"temp.css") as fh:
 			    self.setStyleSheet(fh.read())
 
-
-
 	def center(self,screen_num=0):
 		"""
 			Centre la fenetre dans le l'écran screen_num
@@ -116,26 +135,22 @@ class UQapp(QMainWindow,UQobject):
 
 class UQwidget(QWidget,UQobject):
 	offset = None
-	def __init__(self,name_id = None,parent=None,title=None,style=None,txt=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		name_id = kwargs.get("name_id",None)
+		title = kwargs.get("title",None)
+		style = kwargs.get("style",None)
 		policy = QSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-		if name_id is not None and name_id in txt and "title" in txt[name_id]:
-			self.setText(txt[name_id]["title"])
-		elif title is not None:
-			self.setText(title)
-		else:
-			policy = QSizePolicy(0,0)
-		if name_id is not None and name_id in txt and "style" in txt[name_id]:
-			self.setProperty("class",txt[name_id]["style"])
-		elif style is not None:
-			self.setProperty("class",style)
+		if title is not None:self.setText(title)
+		else: policy = QSizePolicy(0,0)
+		if style is not None: self.setProperty("class",style)
 		self.setSizePolicy(policy)
-
 
 class UQdragwidget(UQwidget):
 	offset = None
-	def __init__(self,name_id = None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 		self.setSizePolicy(0,QSizePolicy.Fixed)
 
 	def mousePressEvent(self, event):
@@ -146,16 +161,17 @@ class UQdragwidget(UQwidget):
 			self.move(self.mapToParent(event.pos()-self.offset))
 
 class UQfixwidget(UQwidget):
-	def __init__(self,name_id = None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		# super().__init__(name_id,parent,title,style)
+		super().__init__(*args,**kwargs)
 		self.setSizePolicy(0,QSizePolicy.Fixed)
 
 class UQtxt(QLabel,UQwidget):
 	"""
 		Classe définissant un champs text non-editable
 	"""
-	def __init__(self,name_id=None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 		self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.show()
 
@@ -167,16 +183,18 @@ class UQdragline(UQtxt):
 	iniheight = None
 	xini = None
 	yini = None
-	def __init__(self,name_id = None,parent=None,title=None,style=None,redim=None,posi=None,size=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		self.redim = kwargs.get("redim",None)
+		self.posi = kwargs.get("posi",None)
+		self.size = kwargs.get("size",None)
 		self.iniwidth = self.width()
 		self.iniheight = self.height()
-		self.redim = redim
-		if size is not None:
-			if self.redim == "w": self.resize(size,self.iniheight)
-			if self.redim == "h": self.resize(self.iniwidth,size)
-		if posi is not None:
-			self.move(posi[0],posi[1])
+		if self.size is not None:
+			if self.redim == "w": self.resize(self.size,self.iniheight)
+			if self.redim == "h": self.resize(self.iniwidth,self.size)
+		if self.posi is not None: self.move(self.posi[0],self.posi[1])
+
 	def mousePressEvent(self, event):
 		self.offset = event.pos()
 
@@ -196,8 +214,13 @@ class UQdragline(UQtxt):
 			self.resize(w,h)
 
 class UQline(UQtxt):
-	def __init__(self,name_id = None,parent=None,title=None,style=None,redim=None,posi=None,size=None,anim=True):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		redim = kwargs.get("redim",None)
+		posi = kwargs.get("posi",None)
+		size = kwargs.get("size",None)
+		anim = kwargs.get("anim",True)
 		w = 5
 		if redim == "w": self.resize(size,self.height())
 		if redim == "h": self.resize(self.width(),size)
@@ -210,10 +233,8 @@ class UQline(UQtxt):
 		self.__animation.setKeyValueAt(0,QColor(0, 189, 69))
 		self.__animation.setKeyValueAt(0.5,QColor(214, 69, 0))
 		self.__animation.setKeyValueAt(1,QColor(0, 189, 69))
-		# self.__animation.setKeyValueAt(1,QColor(41, 118, 148))
 		self.__animation.setLoopCount(-1)
-		if anim:
-			self.__animation.start()
+		if anim: self.__animation.start()
 		self.show()
 
 	def load_anim(self):
@@ -226,13 +247,19 @@ class UQtxtedit(QLineEdit,UQwidget):
 	"""
 		Classe définissant un champs text editable
 	"""
-	def __init__(self,name_id=None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 		self.show()
 
 class UQslider(QSlider,UQwidget):
-	def __init__(self,name_id=None,parent=None,title=None,style=None,vmin=None,vmax=None,step=None,direc=Qt.Horizontal,connect2=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		vmin = kwargs.get("vmin",None)
+		vmax = kwargs.get("vmax",None)
+		step = kwargs.get("step",None)
+		direc = kwargs.get("step",Qt.Horizontal)
+		connect2 = kwargs.get("connect2",None)
 		if vmin is not None: self.setMinimum(vmin)
 		if vmax is not None: self.setMaximum(vmax)
 		if step is not None: self.setSingleStep(step)
@@ -241,28 +268,23 @@ class UQslider(QSlider,UQwidget):
 				self.valueChanged.connect(connect2[1])
 		self.setOrientation(direc)
 
-
 class UQbut(QPushButton,UQwidget):
 	"""
 		Classe définissant le widget bouton
 	"""
-	def __init__(self,name_id=None,parent=None,title=None,style="stdButton",icon=None,tooltip=None,connect2=None):
-		super().__init__(name_id,parent,title,style)
-		if tooltip is not None:
-			self.setToolTip(tooltip)
-		elif name_id is not None and name_id in txt and "tooltip" in txt[name_id]:
-			self.setToolTip(txt[name_id]["tooltip"])
-		elif name_id is not None and name_id in txt and "title" in txt[name_id]:
-			self.setToolTip(txt[name_id]["title"])
-		if name_id is not None and name_id in txt and "icon" in txt[name_id]:
-			self.p_icon = txt[name_id]["icon"]
-		elif icon is not None:
-			self.p_icon = icon
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		title = kwargs.get("title",None)
+		icon = kwargs.get("icon",None)
+		tooltip = kwargs.get("tooltip",None)
+		connect2 = kwargs.get("connect2",None)
+		if tooltip is not None:self.setToolTip(tooltip)
+		elif title is not None: self.setToolTip(title)
+		if icon is not None: self.p_icon = icon
 		if connect2 is not None:
 			if connect2[0] == "clicked":
 				self.clicked.connect(connect2[1])	
-		# self.setSizePolicy(0,0)
-
 		self.show()
 
 	def __setattr__(self,nom,val):
@@ -277,28 +299,29 @@ class UQbut(QPushButton,UQwidget):
 		self.setCursor(Qt.PointingHandCursor)
 
 class UQcombo(QComboBox,UQwidget):
-	def __init__(self,name_id = None,parent=None,title=None,style=None,items=None,connect2=None):
-		super().__init__(name_id,parent,title,style)
-		if items is not None:
-			self.addItems(items)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		items = kwargs.get("items",None)
+		connect2 = kwargs.get("connect2",None)
+		if items is not None: self.addItems(items)
 		if connect2 is not None:
 			if connect2[0] == "changed":
 				self.currentIndexChanged.connect(connect2[1])
-		# policy = QSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 		self.setSizePolicy(QSizePolicy.Expanding,0)
 
 
 class UQgroupbox(QGroupBox,UQwidget):
-	def __init__(self,name_id = None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 class UQradio(QRadioButton,UQobject):
-	def __init__(self,name_id = None,parent=None,title=None,style=None,connect2=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		connect2 = kwargs.get("connect2",None)
+		style = kwargs.get("style",None)
 		self.setAutoExclusive(True)
-		if title is not None: self.setText(title)
-		if style is not None:
-			self.setProperty("class",style)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
 				self.clicked.connect(connect2[1])	
@@ -306,44 +329,49 @@ class UQradio(QRadioButton,UQobject):
 				self.toggled.connect(connect2[1])
 
 class UQcheckbox(QCheckBox,UQwidget):
-	def __init__(self,name_id = None,parent=None,title=None,style=None,connect2=None):
-		super().__init__(name_id,parent,title,style)
-
-
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		connect2 = kwargs.get("connect2",None)
+		style = kwargs.get("style",None)
+		self.setAutoExclusive(True)
+		if connect2 is not None:
+			if connect2[0] == "clicked":
+				self.clicked.connect(connect2[1])	
+			if connect2[0] == "toggled":
+				self.toggled.connect(connect2[1])
 
 class UQaction(QAction,UQobject):
 	"""
 		Classe de définition d'action
 	"""
-	def __init__(self,name_id=None,parent=None,text=None,icon=None,shortcut=None):
-		super().__init__(name_id,parent)
-		if icon is not None:
-			self.setIcon(QIcon(icon))
-		if text is not None:
-			self.setStatusTip(text)
-			self.setText(text)
-		if shortcut is not None:
-			self.setShortcut(shortcut)
-
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		title = kwargs.get("title",None)
+		icon = kwargs.get("icon",None)
+		shortcut = kwargs.get("shortcut",None)
+		if icon is not None: self.setIcon(QIcon(icon))
+		if title is not None:
+			self.setStatusTip(title)
+			self.setText(title)
+		if shortcut is not None: self.setShortcut(shortcut)
 
 class UQframebox(QFrame,UQwidget):
-	def __init__(self,name_id=None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 		policy = QSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
 		self.setSizePolicy(policy)
 		self.setSizePolicy(0, 0)
-
 		self.show()
 
 class UQscrollarea(QScrollArea,UQframebox):
-	def __init__(self,name_id=None,parent=None,title=None,style=None):
-		super().__init__(name_id,parent,title,style)
-
-
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 class UQboxlayout(QBoxLayout,UQobject):
-	def __init__(self,name_id=None,parent=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 		self.setContentsMargins(0,0,0,0)
 		self.setSpacing(0)
 
@@ -370,17 +398,16 @@ class UQboxlayout(QBoxLayout,UQobject):
 			return itm.widget()
 
 class UQvboxlayout(QVBoxLayout,UQboxlayout):
-	def __init__(self,name_id=None,parent=None):
-		super().__init__(name_id,parent)
-
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 class UQhboxlayout(QHBoxLayout,UQboxlayout):
-	def __init__(self,name_id=None,parent=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 class UQgridlayout(QGridLayout,UQboxlayout):
-	def __init__(self,name_id=None,parent=None):
-		super().__init__(name_id,parent)
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
 	def get_widget_position(self,name_id):
 		w = self.get_widget_by_name(name_id)
