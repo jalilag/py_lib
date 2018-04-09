@@ -29,6 +29,12 @@ def txtBox(title,corpus,qtype="info",parent=None):
 	if qtype == "warning":
 		QMessageBox.warning(parent,title,corpus,QMessageBox.Ok)
 
+def get_text(name_id):
+	if name_id in utxt and ulang in utxt[name_id]:
+		return utxt[name_id][ulang]
+	else:
+		return name_id
+
 
 class UQobject(QObject):
 	def __init__(self,*args,**kwargs):
