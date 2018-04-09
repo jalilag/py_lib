@@ -321,12 +321,17 @@ class UQgroupbox(QGroupBox,UQwidget):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 
-class UQradio(QRadioButton,UQobject):
+class UQradio(QRadioButton,UQwidget):
 	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
+		print(kwargs)
 		kwargs = self._args(*args,**kwargs)
+		print(kwargs)
+		super().__init__(*args,**kwargs)
 		connect2 = kwargs.get("connect2",None)
-		style = kwargs.get("style",None)
+		# style = kwargs.get("style",None)
+		# title = kwargs.get("title",None)
+		# if title is not None:self.setText(title)
+		# if style is not None: self.setProperty("class",style)
 		self.setAutoExclusive(True)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
