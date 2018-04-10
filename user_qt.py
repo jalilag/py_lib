@@ -50,6 +50,8 @@ class UQobject(QObject):
 			if len(args) > 1: kwargs["name_id"] = args[1]
 		if "name_id" in kwargs and kwargs["name_id"] in usty:  
 			kwargs.update(usty[kwargs["name_id"]])
+			if "title" not in kwargs and kwargs["name_id"] in utxt:
+				kwargs["title"] = kwargs["name_id"]
 		if "title" in kwargs:
 			if kwargs["title"] in utxt:
 				if ulang in utxt[kwargs["title"]]: 
@@ -323,9 +325,7 @@ class UQgroupbox(QGroupBox,UQwidget):
 
 class UQradio(QRadioButton,UQwidget):
 	def __init__(self,*args,**kwargs):
-		print(kwargs)
 		kwargs = self._args(*args,**kwargs)
-		print(kwargs)
 		super().__init__(*args,**kwargs)
 		connect2 = kwargs.get("connect2",None)
 		# style = kwargs.get("style",None)
@@ -465,10 +465,10 @@ class Overlay(QWidget):
 		# self.timer = self.startTimer()
 		self.counter = 0
  
-	def visu_update(self):
-		print("yes")
-		self.counter += 1
-		self.update()
+	# def visu_update(self):
+	# 	print("yes")
+	# 	self.counter += 1
+	# 	self.update()
 		# if not self.status:
 		# 	# self.killTimer(self.timer)
 		# 	self.hide()
