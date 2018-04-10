@@ -50,8 +50,8 @@ class UQobject(QObject):
 			if len(args) > 1: kwargs["name_id"] = args[1]
 		if "name_id" in kwargs and kwargs["name_id"] in usty:  
 			kwargs.update(usty[kwargs["name_id"]])
-			if "title" not in kwargs and kwargs["name_id"] in utxt:
-				kwargs["title"] = kwargs["name_id"]
+		if "name_id" in kwargs and "title" not in kwargs and kwargs["name_id"] in utxt:
+			kwargs["title"] = kwargs["name_id"]
 		if "title" in kwargs:
 			if kwargs["title"] in utxt:
 				if ulang in utxt[kwargs["title"]]: 

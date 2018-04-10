@@ -62,7 +62,6 @@ class Usql:
 		s00 = "VALUES(" + s00 + ")"
 		s0 += s00 
 		s1 = tuple(values)
-		print(s0,s1)
 		self.cursor.execute(s0,s1)
 		self.conn.commit()
 
@@ -71,7 +70,6 @@ class Usql:
 		"id INTEGER PRIMARY KEY AUTOINCREMENT," + \
 		items + \
 		")"
-		print(s)
 		self.cursor.execute(s)
 		self.conn.commit()
 
@@ -80,7 +78,6 @@ class Usql:
 		while isinstance(u_id,int) is not True and isinstance(u_id,str) is not True:
 			u_id = u_id[0]
 		s0 = 'UPDATE ' + tbname + ' SET ' + u_field + ' = ' + str(u_value) + ' WHERE id = ' + str(u_id)
-		print(s0)
 		self.cursor.execute(s0)#l,str(u_value))
 		self.conn.commit()
 
