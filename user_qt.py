@@ -287,6 +287,9 @@ class UQbut(QPushButton,UQwidget):
 		icon = kwargs.get("icon",None)
 		tooltip = kwargs.get("tooltip",None)
 		connect2 = kwargs.get("connect2",None)
+		expand = kwargs.get("expand",None)
+		if expand is False: self.setSizePolicy(0,0)
+
 		if tooltip is not None:self.setToolTip(tooltip)
 		elif title is not None: self.setToolTip(title)
 		if icon is not None: self.p_icon = icon
