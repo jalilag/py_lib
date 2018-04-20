@@ -26,17 +26,17 @@ class Usql:
 			s += " " + u_join 
 		if u_where is not None:
 			s += " WHERE " + u_where
-		if u_limit is not None:
-			s += " LIMIT " + u_limit
 		if u_orderby is not None:
 			s += " ORDER BY " + u_orderby
+		if u_limit is not None:
+			s += " LIMIT " + u_limit
 		return s
 
-	def select(self,u_from,u_item="*",u_where=None,u_limit=None,u_join=None,u_orderby=None):
+	def select(self,u_from,u_item="*",u_where=None,u_limit=None,u_join=None,u_orderby=None,pr=None):
 		"""Selection dans la base de donnée"""
 		if self.count(u_from,u_where,u_limit,u_join) > 0:
 			s = self.build_order("SELECT",u_from,u_item,u_where,u_limit,u_join,u_orderby)
-			# print(s)
+			if pr is not None: print(s)
 			self.cursor.execute(s)
 			s = self.cursor.fetchall()
 			if isinstance(s,list) and len(s) > 0:
