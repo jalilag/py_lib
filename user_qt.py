@@ -1,7 +1,7 @@
 import sys
 import os
 import math
-from PyQt5.QtWidgets import QApplication, QScrollArea, QMainWindow,QSizePolicy, QPushButton,QComboBox,QSlider, QStyle, QMessageBox,QLineEdit,QWidget,QLabel,QDesktopWidget,QAction,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QGridLayout,QGraphicsColorizeEffect,QGroupBox,QRadioButton,QCheckBox
+from PyQt5.QtWidgets import QApplication, QScrollArea, QMainWindow,QSizePolicy, QPushButton,QComboBox,QSlider, QStyle, QMessageBox,QLineEdit,QPlainTextEdit,QWidget,QLabel,QDesktopWidget,QAction,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QGridLayout,QGraphicsColorizeEffect,QGroupBox,QRadioButton,QCheckBox
 from PyQt5.QtGui import QIcon, QPixmap,QPainter,QPalette,QColor,QBrush,QPen
 from PyQt5.QtCore import Qt,QObject,QSize,QPropertyAnimation,QRect
 usty = None
@@ -259,6 +259,14 @@ class UQtxtedit(QLineEdit,UQwidget):
 		super().__init__(*args,**kwargs)
 		self.show()
 
+class UQplaintxtedit(QPlainTextEdit,UQwidget):
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)	
+		kwargs = self._args(*args,**kwargs)
+		placeholder = kwargs.get("placeholder",None)
+		if placeholder is not None: self.setPlaceholderText(placeholder)
+
+
 class UQslider(QSlider,UQwidget):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
@@ -342,13 +350,23 @@ class UQradio(QRadioButton,UQwidget):
 			if connect2[0] == "toggled":
 				self.toggled.connect(connect2[1])
 
+class UQgroupbox(QGroupBox,UQobject):
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		title = kwargs.get("title",None)
+		if title is not None:
+			self.setTitle(title)	
+
+
 class UQcheckbox(QCheckBox,UQwidget):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		kwargs = self._args(*args,**kwargs)
 		connect2 = kwargs.get("connect2",None)
 		style = kwargs.get("style",None)
-		self.setAutoExclusive(True)
+		exclusive = kwargs.get("exclusive")
+		if exclusive is not None: self.setAutoExclusive(True)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
 				self.clicked.connect(connect2[1])	
