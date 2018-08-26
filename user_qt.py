@@ -150,7 +150,7 @@ class UQwidget(QWidget,UQobject):
 		title = kwargs.get("title",None)
 		style = kwargs.get("style",None)
 		policy = QSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-		if title is not None:self.setText(title)
+		if title is not None:self.setText(str(title))
 		else: policy = QSizePolicy(0,0)
 		if style is not None: self.setProperty("class",style)
 		self.setSizePolicy(policy)
@@ -323,7 +323,14 @@ class UQcombo(QComboBox,UQwidget):
 		kwargs = self._args(*args,**kwargs)
 		items = kwargs.get("items",None)
 		connect2 = kwargs.get("connect2",None)
-		if items is not None: self.addItems(items)
+		if items is not None:
+			print(type(items[0])) 
+			if isinstance(items[0],list) or isinstance(items[0],tuple):
+				for i in items:
+					print(i)
+					self.addItem(i[0],i[1])
+			else:
+				self.addItems(items)
 		if connect2 is not None:
 			if connect2[0] == "changed":
 				self.currentIndexChanged.connect(connect2[1])

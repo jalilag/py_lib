@@ -32,11 +32,19 @@ class Usql:
 			s += " LIMIT " + u_limit
 		return s
 
-	def select(self,u_from,u_item="*",u_where=None,u_limit=None,u_join=None,u_orderby=None,pr=None):
+	def request(self,string):
+		print(string)
+		self.cursor.execute(string)
+		s = self.cursor.fetchall()
+		if isinstance(s,list) and len(s) > 0:
+			if isinstance(s[0],tuple): s[0] = list(s[0])
+		return self.format_array(s)
+
+	def select(self,u_from,u_item="*",u_where=None,u_limit=None,u_join=None,u_orderby=None,print_req=None):
 		"""Selection dans la base de donnée"""
 		if self.count(u_from,u_where,u_limit,u_join) > 0:
 			s = self.build_order("SELECT",u_from,u_item,u_where,u_limit,u_join,u_orderby)
-			if pr is not None: print(s)
+			if print_req is not None: print(s)
 			self.cursor.execute(s)
 			s = self.cursor.fetchall()
 			if isinstance(s,list) and len(s) > 0:
@@ -74,12 +82,28 @@ class Usql:
 		self.conn.commit()
 
 
-	def update(self,tbname,u_field,u_id,u_value):
-		while isinstance(u_id,int) is not True and isinstance(u_id,str) is not True:
-			u_id = u_id[0]
-		s0 = 'UPDATE ' + tbname + ' SET ' + u_field + ' = ' + str(u_value) + ' WHERE id = ' + str(u_id)
+	# def update(self,tbname,u_field,u_id,u_value):
+	# 	while isinstance(u_id,int) is not True and isinstance(u_id,str) is not True:
+	# 		u_id = u_id[0]
+	# 	s0 = 'UPDATE ' + tbname + ' SET ' + u_field + ' = ' + str(u_value) + ' WHERE id = ' + str(u_id)
+	# 	self.cursor.execute(s0)#l,str(u_value))
+	# 	self.conn.commit()
+
+	def update(self,tbname,u_field,u_value,u_where):
+		s =""
+		for i in range(len(u_field)):
+			if u_value[i] is not None:
+				s += u_field[i] + '='
+				if isinstance(u_value[i],str): 
+					if len(u_value[i]) > 0: s += "'" + u_value[i] + "',"
+					else: s += "NULL,"
+				else: s += u_value[i] +','
+		s = s[:-1]
+		s0 = 'UPDATE ' + tbname + ' SET ' + s + ' WHERE ' + u_where
+		print(s0)
 		self.cursor.execute(s0)#l,str(u_value))
 		self.conn.commit()
+
 
 	def table_exist(self,tbname):
 		s = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='" + tbname + "'"
@@ -112,3 +136,21 @@ class Usql:
 		else:
 			N = self.count(tbname,u_where=u_id + "=" + str(u_value))
 		return N
+	def parse_array_to_string(self,tab,string=False):
+		data = ''
+		for i in range(len(tab)):
+			if isinstance(string,list): check = string[i]
+			else: check = string
+			if check:
+				data += "'" +tab[i]+"',"
+			else:
+				data += tab[i]+","
+		return data[:-1]
+	def format_array(self,data):
+		if isinstance(data,list):
+			if len(data) > 0:
+				if isinstance(data[0],list) or isinstance(data[0],tuple):
+					if len(data[0]) == 1:
+						for i in range(len(data)):
+							data[i] = data[i][0]
+		return data
