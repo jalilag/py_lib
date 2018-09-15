@@ -1,13 +1,13 @@
 import sys
 import os
 import math
-from PyQt5.QtWidgets import QApplication, QScrollArea, QMainWindow,QSizePolicy, QPushButton,QComboBox,QSlider, QStyle, QMessageBox,QLineEdit,QPlainTextEdit,QWidget,QLabel,QDesktopWidget,QAction,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QGridLayout,QGraphicsColorizeEffect,QGroupBox,QRadioButton,QCheckBox
-from PyQt5.QtGui import QIcon, QPixmap,QPainter,QPalette,QColor,QBrush,QPen
-from PyQt5.QtCore import Qt,QObject,QSize,QPropertyAnimation,QRect
+from PyQt5.QtWidgets import QApplication, QDateEdit, QScrollArea, QMainWindow,QSizePolicy, QPushButton,QComboBox,QSlider, QStyle, QMessageBox,QLineEdit,QPlainTextEdit,QWidget,QLabel,QDesktopWidget,QAction,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QGridLayout,QGraphicsColorizeEffect,QGroupBox,QRadioButton,QCheckBox
+from PyQt5.QtGui import QIcon, QPixmap,QPainter,QPalette,QColor,QBrush,QPen,QFont
+from PyQt5.QtCore import Qt,QObject,QSize,QPropertyAnimation,QRect,QDate
+from PyQt5.QtPrintSupport import QPrinter
 usty = None
 utxt = None
 ulang = None
-
 
 def txtBox(title,corpus,qtype="info",parent=None):
 	if title in utxt: title = utxt[title][ulang]
@@ -30,10 +30,47 @@ def txtBox(title,corpus,qtype="info",parent=None):
 		QMessageBox.warning(parent,title,corpus,QMessageBox.Ok)
 
 def get_text(name_id):
-	if name_id in utxt and ulang in utxt[name_id]:
-		return utxt[name_id][ulang]
-	else:
-		return name_id
+	if name_id is None: return
+	if isinstance(name_id,str): name_id = [name_id]
+	print(name_id)
+	for i,j in enumerate(name_id):
+		if j in utxt and ulang in utxt[j]:
+			name_id[i] = utxt[j][ulang]
+	if len(name_id) == 1: name_id = name_id[0]
+	return name_id
+
+
+
+def print_widget_as_pdf(wid,pdfname): 	 
+	# Print options
+	if not pdfname: pdfname = "test"
+	if wid is None:
+		print("No widget")
+		return
+	printer = QPrinter(QPrinter.HighResolution)
+	printer.setOrientation(QPrinter.Landscape)
+	printer.setPaperSize(QPrinter.A9)
+	printer.setPageSize(QPrinter.A9)
+	printer.setPageMargins(5, 5, 5, 5, QPrinter.Millimeter)
+	# Setting the margins and then calling setFullPage() will discard the margins.
+	printer.setFullPage(True)
+	printer.setOutputFormat(QPrinter.PdfFormat)
+	print(pdfname)
+	printer.setOutputFileName(pdfname+".pdf")
+	 
+	# Render/Paint it
+	painter = QPainter()
+	painter.begin(printer)
+	 
+	# Establish scaling transform
+	scaleX = printer.pageRect().width() / wid.rect().width()
+	scaleY = printer.pageRect().height() / wid.rect().height()
+	useScale = min(scaleX, scaleY)
+	painter.scale(useScale, useScale)
+	 
+	wid.render(painter)
+	painter.end()
+
 
 
 class UQobject(QObject):
@@ -155,6 +192,9 @@ class UQwidget(QWidget,UQobject):
 		if style is not None: self.setProperty("class",style)
 		self.setSizePolicy(policy)
 
+	def txt(self):
+		return self.text()
+
 class UQdragwidget(UQwidget):
 	offset = None
 	def __init__(self,*args,**kwargs):
@@ -257,15 +297,23 @@ class UQtxtedit(QLineEdit,UQwidget):
 	"""
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
-		self.show()
+		connect2 = kwargs.get("connect2",None)
+		if connect2 is not None:
+			if connect2[0] == "changed":
+				self.textEdited.connect(connect2[1])
 
-class UQplaintxtedit(QPlainTextEdit,UQwidget):
+class UQplaintxtedit(QPlainTextEdit,UQobject):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)	
 		kwargs = self._args(*args,**kwargs)
 		placeholder = kwargs.get("placeholder",None)
+		title = kwargs.get("title",None)
+		style = kwargs.get("style",None)
+		if title is not None: self.setPlainText(title)
 		if placeholder is not None: self.setPlaceholderText(placeholder)
-
+		if style is not None: self.setProperty("class",style)
+	def txt(self):
+		return self.toPlainText()
 
 class UQslider(QSlider,UQwidget):
 	def __init__(self,*args,**kwargs):
@@ -317,12 +365,30 @@ class UQbut(QPushButton,UQwidget):
 	def enterEvent(self,event):
 		self.setCursor(Qt.PointingHandCursor)
 
-class UQcombo(QComboBox,UQwidget):
+class UQdateedit(QDateEdit,UQobject):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		kwargs = self._args(*args,**kwargs)
+		style = kwargs.get("style",None)
+		popup = kwargs.get("popup",None)
+		self.setMinimumDate(QDate(2018,9,1))
+		date_format = kwargs.get("date_format",None)
+		if style is not None: self.setProperty("class",style)
+		if popup is not None: 
+			if popup == True: self.setCalendarPopup(True)
+		if date_format is not None: self.setDisplayFormat(date_format)
+	def txt(self):
+		return self.date().toString('yyyy-MM-dd')
+
+class UQcombo(QComboBox,UQobject):
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		kwargs = self._args(*args,**kwargs)
+		style = kwargs.get("style",None)
 		items = kwargs.get("items",None)
+		current_data = kwargs.get("current_data",None)
 		connect2 = kwargs.get("connect2",None)
+		if style is not None: self.setProperty("class",style)
 		if items is not None:
 			print(type(items[0])) 
 			if isinstance(items[0],list) or isinstance(items[0],tuple):
@@ -331,11 +397,16 @@ class UQcombo(QComboBox,UQwidget):
 					self.addItem(i[0],i[1])
 			else:
 				self.addItems(items)
+		if current_data is not None: self.setCurrentData(current_data)
 		if connect2 is not None:
 			if connect2[0] == "changed":
 				self.currentIndexChanged.connect(connect2[1])
 		self.setSizePolicy(QSizePolicy.Expanding,0)
 
+	def setCurrentData(self,data):
+		self.setCurrentIndex(self.findData(data))
+	def txt(self):
+		return self.currentData()
 
 class UQgroupbox(QGroupBox,UQwidget):
 	def __init__(self,*args,**kwargs):
@@ -373,12 +444,17 @@ class UQcheckbox(QCheckBox,UQwidget):
 		connect2 = kwargs.get("connect2",None)
 		style = kwargs.get("style",None)
 		exclusive = kwargs.get("exclusive")
+		checked = kwargs.get("checked")
 		if exclusive is not None: self.setAutoExclusive(True)
+		if checked is not None: self.setChecked(True)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
 				self.clicked.connect(connect2[1])	
 			if connect2[0] == "toggled":
 				self.toggled.connect(connect2[1])
+
+	def txt(self):
+		return self.isChecked()
 
 class UQaction(QAction,UQobject):
 	"""
@@ -413,6 +489,20 @@ class UQboxlayout(QBoxLayout,UQobject):
 		super().__init__(*args,**kwargs)
 		self.setContentsMargins(0,0,0,0)
 		self.setSpacing(0)
+
+	def get_items_by_name_like(self,name_id,as_widget = False):
+		wids = []
+		for i in range(self.count()):
+			try:
+				self.itemAt(i).widget().objectName().index(name_id)
+				if as_widget:
+					wids.append(self.itemAt(i).widget())
+				else:
+					wids.append(self.itemAt(i))
+			except:
+				continue
+		return wids
+
 
 	def get_item_by_name(self,name_id):
 		for i in range(self.count()):
