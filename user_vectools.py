@@ -70,7 +70,7 @@ def highlight_freq(data,fvec,axis=-1,flow=None,fhigh=None,coef=0.9):
 		if fhigh is not None:
 			ysort = n.where((fvec > fhigh))[0]
 			for i in range(n.size(data,0)):
-				data[i][ysort] = data[i][ysort]*coef 
+				data[i][ysort] = data[i][ysort]*coef
 		if flow is not None:
 			ysort = n.where((fvec < flow))[0]
 			for i in range(n.size(data,0)):
@@ -78,9 +78,9 @@ def highlight_freq(data,fvec,axis=-1,flow=None,fhigh=None,coef=0.9):
 	elif axis == -2:
 		if flow is not None:
 			ysort = n.where((fvec > fhigh))[0]
-			data[ysort] = data[ysort]*coef 
+			data[ysort] = data[ysort]*coef
 		if fhigh is not None:
 			ysort = n.where((fvec < flow))[0]
-			data[ysort] = data[ysort]*coef 
-	return data 
-	
+			data[ysort] = data[ysort]*coef
+	return data
+

@@ -33,7 +33,7 @@ class Usql:
 	def build_order(self,u_order,u_from,u_item="*",u_where=None,u_limit=None,u_join=None,u_orderby=None):
 		s =u_order + " " + u_item + " FROM " + u_from
 		if u_join is not None:
-			s += " " + u_join 
+			s += " " + u_join
 		if u_where is not None:
 			s += " WHERE " + u_where
 		if u_orderby is not None:
@@ -44,9 +44,16 @@ class Usql:
 
 	def check_values(self,table_name,val_dict):
 		cols_info = self.cols_info(table_name)
+			# Custom data_types
+		spc_types = self.request("\
+			SELECT col_name, c.min_length, c.max_length, c.must_contained \
+			FROM _special_cols \
+			JOIN _custom_types c USING(custom_type)\
+			WHERE table_name='"+table_name+"'",True)
+		spc_types = {item[0]: item[1:] for item in spc_types}
 		for i in cols_info:
 			if i["name"] in val_dict:
-				val_dict[i["name"]] = str(val_dict[i["name"]]) 
+				val_dict[i["name"]] = str(val_dict[i["name"]])
 				if (val_dict[i["name"]] is None or val_dict[i["name"]] == "") and i["notnull"]: return [0x0001,True,i["name"]]
 				if val_dict[i["name"]] is None or val_dict[i["name"]] == "":
 					val_dict[i["name"]] = "NULL"
@@ -63,11 +70,23 @@ class Usql:
 					except:
 						return [0x0003,True,i["name"]]
 				# Custom data_types
-
+				if i["name"] in list(spc_types.keys()) and len(val_dict[i["name"]]) > 0:
+					if spc_types[i["name"]][0] is not None:
+						if len(val_dict[i["name"]]) < spc_types[i["name"]][0]: return [0x0004,True,i["name"]]
+					if spc_types[i["name"]][1] is not None:
+						if len(val_dict[i["name"]]) > spc_types[i["name"]][1]: return [0x0005,True,i["name"]]
+					if spc_types[i["name"]][2] is not None:
+						items_excl = spc_types[i["name"]][2].split('|')
+						for k in items_excl:
+							if len(k) > 0:
+								items_opt = k.split(',')
+								print(items_opt)
+								ct = 0
+								for l in items_opt:
+									if l is not None:
+										if len(l) > 0 and l in val_dict[i["name"]]: ct += 1
+								if ct != 1: return [0x0006,True,i["name"]]
 		return [0,False,None]
-
-	def remove_prefix(self,word):
-		re
 
 	def request(self,string,just_values = False):
 		self.cursor.execute(string)
@@ -129,7 +148,7 @@ class Usql:
 		s = self.build_order("SELECT count(*) as ct",u_from,u_item,u_where,u_limit,u_join)
 		self.cursor.execute(s)
 		return self.cursor.fetchone()["ct"]
-		
+
 	def delete(self,u_from,u_where=None):
 		if self.count(u_from,u_where=u_where) == 1:
 			s = self.build_order("DELETE",u_from=u_from,u_where=u_where,u_item="")

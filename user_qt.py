@@ -17,7 +17,7 @@ def txtBox(title,corpus,qtype="info",parent=None):
 	if qtype == "critical":
 		QMessageBox.critical(parent,title,corpus,QMessageBox.Ok)
 	if qtype == "info":
-		QMessageBox.information(parent,title,corpus,QMessageBox.Ok)				
+		QMessageBox.information(parent,title,corpus,QMessageBox.Ok)
 	if qtype == "question":
 		r = QMessageBox.question(parent,title,corpus,QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
 		if r == QMessageBox.Yes:
@@ -32,7 +32,6 @@ def txtBox(title,corpus,qtype="info",parent=None):
 def get_text(name_id):
 	if name_id is None: return
 	if isinstance(name_id,str): name_id = [name_id]
-	print(name_id)
 	for i,j in enumerate(name_id):
 		if j in utxt and ulang in utxt[j]:
 			name_id[i] = utxt[j][ulang]
@@ -41,7 +40,7 @@ def get_text(name_id):
 
 
 
-def print_widget_as_pdf(wid,pdfname): 	 
+def print_widget_as_pdf(wid,pdfname):
 	# Print options
 	if not pdfname: pdfname = "test"
 	if wid is None:
@@ -57,17 +56,17 @@ def print_widget_as_pdf(wid,pdfname):
 	printer.setOutputFormat(QPrinter.PdfFormat)
 	print(pdfname)
 	printer.setOutputFileName(pdfname+".pdf")
-	 
+
 	# Render/Paint it
 	painter = QPainter()
 	painter.begin(printer)
-	 
+
 	# Establish scaling transform
 	scaleX = printer.pageRect().width() / wid.rect().width()
 	scaleY = printer.pageRect().height() / wid.rect().height()
 	useScale = min(scaleX, scaleY)
 	painter.scale(useScale, useScale)
-	 
+
 	wid.render(painter)
 	painter.end()
 
@@ -83,15 +82,15 @@ class UQobject(QObject):
 		if parent is not None: self.setParent(parent)
 
 	def _args(*args,**kwargs):
-		if "name_id" not in kwargs: 
+		if "name_id" not in kwargs:
 			if len(args) > 1: kwargs["name_id"] = args[1]
-		if "name_id" in kwargs and kwargs["name_id"] in usty:  
+		if "name_id" in kwargs and kwargs["name_id"] in usty:
 			kwargs.update(usty[kwargs["name_id"]])
 		if "name_id" in kwargs and "title" not in kwargs and kwargs["name_id"] in utxt:
 			kwargs["title"] = kwargs["name_id"]
 		if "title" in kwargs:
 			if kwargs["title"] in utxt:
-				if ulang in utxt[kwargs["title"]]: 
+				if ulang in utxt[kwargs["title"]]:
 					kwargs["title"] = utxt[kwargs["title"]][ulang]
 		return kwargs
 
@@ -99,7 +98,7 @@ class UQobject(QObject):
 		for i in self.children():
 			if str(i.objectName()) == str(name_id):
 				return i
-		return None			
+		return None
 
 
 
@@ -165,11 +164,11 @@ class UQapp(QMainWindow,UQobject):
 		with open(path) as fh:
 		    app.setStyleSheet(fh.read())
 
-	def keyPressEvent(self, e):   
+	def keyPressEvent(self, e):
 		if e.key() == Qt.Key_F11:
 			self.showMaximized()
 		elif e.key() == Qt.Key_Escape:
-			self.showNormal()        
+			self.showNormal()
 
 	def closeEvent(self, evnt):
 		if self.want_to_close is None:
@@ -250,9 +249,9 @@ class UQdragline(UQtxt):
 		if event.buttons() == Qt.LeftButton and self.offset is not None:
 			self.move(self.mapToParent(event.pos()-self.offset))
 		if event.buttons() == Qt.RightButton and self.offset is not None:
-			x2 = int(event.pos().x())			
+			x2 = int(event.pos().x())
 			y2 = int(event.pos().y())
-			w = abs(x2) 
+			w = abs(x2)
 			h = abs(y2)
 			if w == 0 : w = 10
 			if h == 0 : h = 10
@@ -304,7 +303,7 @@ class UQtxtedit(QLineEdit,UQwidget):
 
 class UQplaintxtedit(QPlainTextEdit,UQobject):
 	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)	
+		super().__init__(*args,**kwargs)
 		kwargs = self._args(*args,**kwargs)
 		placeholder = kwargs.get("placeholder",None)
 		title = kwargs.get("title",None)
@@ -351,7 +350,7 @@ class UQbut(QPushButton,UQwidget):
 		if icon is not None: self.p_icon = icon
 		if connect2 is not None:
 			if connect2[0] == "clicked":
-				self.clicked.connect(connect2[1])	
+				self.clicked.connect(connect2[1])
 		self.show()
 
 	def __setattr__(self,nom,val):
@@ -374,7 +373,7 @@ class UQdateedit(QDateEdit,UQobject):
 		self.setMinimumDate(QDate(2018,9,1))
 		date_format = kwargs.get("date_format",None)
 		if style is not None: self.setProperty("class",style)
-		if popup is not None: 
+		if popup is not None:
 			if popup == True: self.setCalendarPopup(True)
 		if date_format is not None: self.setDisplayFormat(date_format)
 	def txt(self):
@@ -390,13 +389,12 @@ class UQcombo(QComboBox,UQobject):
 		connect2 = kwargs.get("connect2",None)
 		if style is not None: self.setProperty("class",style)
 		if items is not None:
-			print(type(items[0])) 
-			if isinstance(items[0],list) or isinstance(items[0],tuple):
-				for i in items:
-					print(i)
-					self.addItem(i[0],i[1])
-			else:
-				self.addItems(items)
+			if len(items) > 0:
+				if isinstance(items[0],list) or isinstance(items[0],tuple):
+					for i in items:
+						self.addItem(i[0],i[1])
+				else:
+					self.addItems(items)
 		if current_data is not None: self.setCurrentData(current_data)
 		if connect2 is not None:
 			if connect2[0] == "changed":
@@ -424,7 +422,7 @@ class UQradio(QRadioButton,UQwidget):
 		self.setAutoExclusive(True)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
-				self.clicked.connect(connect2[1])	
+				self.clicked.connect(connect2[1])
 			if connect2[0] == "toggled":
 				self.toggled.connect(connect2[1])
 
@@ -434,7 +432,7 @@ class UQgroupbox(QGroupBox,UQobject):
 		kwargs = self._args(*args,**kwargs)
 		title = kwargs.get("title",None)
 		if title is not None:
-			self.setTitle(title)	
+			self.setTitle(title)
 
 
 class UQcheckbox(QCheckBox,UQwidget):
@@ -449,7 +447,7 @@ class UQcheckbox(QCheckBox,UQwidget):
 		if checked is not None: self.setChecked(True)
 		if connect2 is not None:
 			if connect2[0] == "clicked":
-				self.clicked.connect(connect2[1])	
+				self.clicked.connect(connect2[1])
 			if connect2[0] == "toggled":
 				self.toggled.connect(connect2[1])
 
@@ -545,7 +543,7 @@ class UQgridlayout(QGridLayout,UQboxlayout):
 		wid = self.indexOf(w)
 		if wid == -1:
 			return None
-		row = col = None 
+		row = col = None
 		l =  self.getItemPosition(wid)
 		if l is None:
 			return None
@@ -561,13 +559,13 @@ class Overlay(QWidget):
 		self.setPalette(palette)
 		self.setGeometry(int(parent.width()/2+parent.pos().x()/2-50),int(parent.height()/2+parent.pos().y()/2-50),100,100)
 
-	def paintEvent(self, event):      
+	def paintEvent(self, event):
 		painter = QPainter()
 		painter.begin(self)
 		painter.setRenderHint(QPainter.Antialiasing)
 		painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255, 127)))
 		painter.setPen(QPen(Qt.NoPen))
-       
+
 		for i in range(6):
 			if (self.counter / 5) % 6 == i:
 				painter.setBrush(QBrush(QColor(127 + (self.counter % 5)*32, 127, 127)))
@@ -578,11 +576,11 @@ class Overlay(QWidget):
 				self.height()/2 + 30 * math.sin(2 * math.pi * i / 6.0) - 10,
 				20, 20)
 		painter.end()
-   
-	def showEvent(self, event):      
+
+	def showEvent(self, event):
 		# self.timer = self.startTimer()
 		self.counter = 0
- 
+
 	# def visu_update(self):
 	# 	print("yes")
 	# 	self.counter += 1
@@ -590,6 +588,6 @@ class Overlay(QWidget):
 		# if not self.status:
 		# 	# self.killTimer(self.timer)
 		# 	self.hide()
-	
+
 	# def stop():
 	# 	self.status = False

@@ -30,7 +30,7 @@ class UTdms(TdmsFile):
 				if len(g) > group_name:
 					return self.group_channels(g[group_name])
 			else:
-				if group_name.isdigit(): 
+				if group_name.isdigit():
 					if len(g) > int(group_name):
 						return self.group_channels(g[int(group_name)])
 		return list()
@@ -39,7 +39,7 @@ class UTdms(TdmsFile):
 		"""Get a specific channel in a group"""
 		g = self.get_channels(group_name)
 		if len(g) > 0:
-			for i in g: 
+			for i in g:
 				if channel_name == i.channel:
 					return i
 			if isinstance(channel_name,int):

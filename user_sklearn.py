@@ -4,7 +4,7 @@ from scipy import signal as sig
 import time
 import sys
 from sklearn import preprocessing as proc,svm
-from sklearn.model_selection import train_test_split,cross_val_score,GridSearchCV 
+from sklearn.model_selection import train_test_split,cross_val_score,GridSearchCV
 from sklearn.linear_model import Lasso,ElasticNet,Ridge,SGDClassifier
 from sklearn.metrics import r2_score
 from sklearn.ensemble import RandomForestRegressor
@@ -46,7 +46,7 @@ class Train():
 		if model_params is None:
 			params = self.models_list[model]["params"]
 			if fixed_params is not None: params.update(fixed_params)
-			clf = self.user_grid_search(self.models_list[model]["func"],params,self.err)			
+			clf = self.user_grid_search(self.models_list[model]["func"],params,self.err)
 			print("Best params for",model)
 			for ii,jj in clf.cv_results_["params"][clf.cv_results_["mean_test_score"].argmax()].items():
 				if isinstance(jj,str): print(ii,": ",jj)
@@ -54,13 +54,13 @@ class Train():
 			self.params = clf.cv_results_["params"][clf.cv_results_["mean_test_score"].argmax()]
 		else:
 			self.params = model_params
-			if fixed_params is not None: self.params.update(fixed_params)		
+			if fixed_params is not None: self.params.update(fixed_params)
 		## Test model
-		ares = list()		
-		for i in range(Niter):	
+		ares = list()
+		for i in range(Niter):
 			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33)
 			clf = self.models_list[model]["func"](**self.params)
-			self.fitted_model = clf.fit(fmxtrain, fmytrain)	
+			self.fitted_model = clf.fit(fmxtrain, fmytrain)
 			lres = list()
 			for j in range(Niter):
 				fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33)
@@ -114,7 +114,7 @@ class Train():
 			print("Max mean score : ",n.max(clf.cv_results_["mean_test_score"]))
 			print("Err : ",err)
 			for i,j in clf.cv_results_["params"][N1].items():
-				if isinstance(params[i],list) or isinstance(params[i],n.ndarray): 
+				if isinstance(params[i],list) or isinstance(params[i],n.ndarray):
 					err = 0
 					break
 				if not isinstance(j,str):
@@ -154,7 +154,7 @@ class Train():
 		if model == "pred" and self.fitted_model is not None: pickle.dump(self.fitted_model, f)
 		if model == "red" and self.fitted_red is not None: pickle.dump(self.fitted_red, f)
 		f.close()
-		return False	
+		return False
 
 	def load_model(self,fpath,model="pred"):
 		"""Chargement d'un modèle"""
