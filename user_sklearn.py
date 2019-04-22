@@ -1,6 +1,5 @@
 import numpy as n
 from matplotlib import pyplot as plt
-from scipy import signal as sig
 import time
 import sys
 from sklearn import preprocessing as proc,svm
@@ -27,12 +26,13 @@ class Train():
 	fitted_model = None
 	fitted_red = None
 	params = None
-
-	def __init__(self,data_file,target_file,err=0.01):
+	cv = None
+	def __init__(self,data_file,target_file,err=0.01, cv=3):
 		"""Constructeur"""
 		self.input_data = data_file
 		self.target = target_file
 		self.err = err
+		self.cv = cv
 
 	def train_model(self,model=None,model_params=None,with_plot=False,Niter=100,fixed_params=None):
 		# Models
@@ -106,7 +106,8 @@ class Train():
 					parameters[i] = [j]
 		print(parameters)
 		while err > max_err :
-			clf = GridSearchCV(skmod(),parameters,n_jobs=n_jobs)
+			clf = GridSearchCV(skmod(),parameters,n_jobs=n_jobs, cv=self.cv)
+			print(self.target)
 			clf.fit(self.input_data,self.target)
 			N1 = clf.cv_results_["mean_test_score"].argmax()
 			err = n.sqrt(n.var(clf.cv_results_["mean_test_score"]))
