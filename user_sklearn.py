@@ -12,6 +12,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.manifold import Isomap
 from sklearn.neighbors import NearestNeighbors
 from multiprocessing import cpu_count
+import xgboost as xgb
 import pickle
 
 class Train():
@@ -186,7 +187,14 @@ class Classification(Train):
 	"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000}}},
 	"linearsvm":{"func":svm.LinearSVC,"params":{"C":{"start":0.1,"end":1000}}},
 	"nearestneighbors":{"func":NearestNeighbors,"params":{"n_neighbors":n.arange(2,100,1)}},
-	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}}
+	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}},
+	"xgb":{"func":xgb.XGBClassifier,"params":{
+		"booster":{"gbtree","gblinear","dart"},
+		"eta":{"start":0,"end":1},
+		"gamma":{"start":0,"end":1000000},
+		"max_depth":{"start":0,"end":100},
+
+		}}
 }
 
 	def __init__(self,data_file,target_file,err=0.01):
