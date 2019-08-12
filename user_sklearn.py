@@ -78,8 +78,8 @@ class Train():
 			plt.figure()
 			plt.subplot(211)
 			plt.plot(self.target,n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target*100,"x")
-			plt.xlabel("Flowrates (m3/h)")
-			plt.ylabel("Relative uncertainty%")
+			plt.xlabel("Target")
+			plt.ylabel("Relative uncertainty of the prediction%")
 			plt.title(model + " model" + " -> "+"{:.2%}".format(s))
 
 			plt.grid()
@@ -91,14 +91,13 @@ class Train():
 			plt.grid()
 			plt.show()
 
-	def user_grid_search(self,skmod,params,max_err=0.01,n_jobs=1):
+	def user_grid_search(self,skmod,params,max_err=0.01,n_jobs=-1):
 		"""Fonction d'optimisation des paramètres des modèles"""
 		parameters = dict()
 		err = 10
 		for i,j in params.items():
 			if isinstance(j,dict):
 				parameters[i] = n.arange(j["start"],j["end"]+n.abs(j["end"]-j["start"])/10,n.abs(j["end"]-j["start"])/10)
-				# parameters[i] = n.arange(j["start"],j["end"],n.abs(j["end"]-j["start"])/10)
 			else:
 				if isinstance(j,list) or isinstance(j,n.ndarray):
 					parameters[i] = j
@@ -183,7 +182,7 @@ class Regression(Train):
 
 class Classification(Train):
 	models_list = {
-	"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000}}},
+	"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000},"gamma":"auto"}},
 	"linearsvm":{"func":svm.LinearSVC,"params":{"C":{"start":0.1,"end":1000}}},
 	"nearestneighbors":{"func":NearestNeighbors,"params":{"n_neighbors":n.arange(2,100,1)}},
 	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}}
