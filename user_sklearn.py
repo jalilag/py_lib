@@ -5,13 +5,14 @@ import sys
 from sklearn import preprocessing as proc,svm
 from sklearn.model_selection import train_test_split,cross_val_score,GridSearchCV
 from sklearn.linear_model import Lasso,ElasticNet,Ridge,SGDClassifier
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, accuracy_score, f1_score
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.manifold import Isomap
 from sklearn.neighbors import NearestNeighbors
 from multiprocessing import cpu_count
+import xgboost as xgb
 import pickle
 
 class Train():
@@ -34,9 +35,9 @@ class Train():
 		self.err = err
 		self.cv = cv
 
-	def train_model(self,model=None,model_params=None,with_plot=False,Niter=100,fixed_params=None):
+	def train_model(self,model=None,score=None,model_params=None,with_plot=False,Niter=10,fixed_params=None):
 		# Models
-		if model is None: return
+		if model is None or score is None: return
 		model = model.lower()
 		print(model)
 		if model not in self.models_list:
@@ -52,27 +53,31 @@ class Train():
 				if isinstance(jj,str): print(ii,": ",jj)
 				else: print(ii,": {0:9.9f}".format(jj))
 			self.params = clf.cv_results_["params"][clf.cv_results_["mean_test_score"].argmax()]
-		else:
+		elif model_params != 'default':
 			self.params = model_params
 			if fixed_params is not None: self.params.update(fixed_params)
 		## Test model
 		ares = list()
 		for i in range(Niter):
-			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33)
-			clf = self.models_list[model]["func"](**self.params)
+			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
+			if model_params == 'default':
+				clf = self.models_list[model]["func"]()
+			else:
+				clf = self.models_list[model]["func"](**self.params)
 			self.fitted_model = clf.fit(fmxtrain, fmytrain)
 			lres = list()
 			for j in range(Niter):
-				fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33)
-				lres.append(r2_score(fmytest, self.fitted_model.predict(fmxtest)))
+				fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
+				print(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
+				lres.append(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
 			ares.append(n.mean(lres))
 			print(ares[-1])
-
 		s = 1-n.sum(n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)/len(self.target)
 		ss = n.std(1-n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)
 		print(1-n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)
 		print("Moyenne des scores r2 =",n.mean(ares),"+-",n.std(ares))
 		print("Moyenne des écarts relatifs =",s,"+-",ss)
+		print(model)
 		## Figures
 		if with_plot:
 			plt.figure()
@@ -104,7 +109,7 @@ class Train():
 				else:
 					parameters[i] = [j]
 		print(parameters)
-		while err > max_err :
+		while err > max_err:
 			clf = GridSearchCV(skmod(),parameters,n_jobs=n_jobs, cv=self.cv)
 			print(self.target)
 			clf.fit(self.input_data,self.target)
@@ -169,6 +174,9 @@ class Train():
 		return False
 
 class Regression(Train):
+	score = {
+	"r2":r2_score
+	}
 	models_list = {
 	"lasso":     {"func":Lasso,"params":{"alpha":{"start":0,"end":1000}}},
 	"elasticnet":{"func":ElasticNet,"params":{"alpha":{"start":0.00001,"end":1000},"l1_ratio":{"start":0,"end":1}}},
@@ -176,17 +184,36 @@ class Regression(Train):
 	"svm":       {"func":svm.SVR,"params":{"epsilon":{"start":0,"end":1},"C":{"start":0.1,"end":1000}}},
 	"rf":        {"func":RandomForestRegressor,"params":{"n_estimators":n.arange(2,100,1)}}
 	}
+
 	def __init__(self,data_file,target_file,err=0.01):
 		super().__init__(data_file,target_file,err=0.01)
 		"""Constructeur"""
 
 class Classification(Train):
+	score = {
+	"accuracy":accuracy_score,
+	"f1":f1_score
+	}
 	models_list = {
 	"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000},"gamma":"auto"}},
 	"linearsvm":{"func":svm.LinearSVC,"params":{"C":{"start":0.1,"end":1000}}},
 	"nearestneighbors":{"func":NearestNeighbors,"params":{"n_neighbors":n.arange(2,100,1)}},
-	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}}
-}
+	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}},
+	"xgb":{"func":xgb.XGBClassifier,"params": 
+		{
+		"booster":["gbtree","gblinear","dart"], # gbtree
+		# "eta":{"start":0.01,"end":0.3}, # 0.3
+		"max_depth":n.arange(3,11), # 6
+		"min_child_weight":{"start":0,"end":10}, # 1 # 0
+		# "subsample":{"start":0.5,"end":1}, # 0.7
+		# "colsample_bytree": {"start":0.5,"end":1}, # 1 # 0.6
+		"objective":"binary:logistic",
+		# "gamma":{"start":0,"end":1000000}, # 0
+		# "lambda": {"start":0,"end":1000},
+		"alpha": {"start":0,"end":1000},
+		}
+		}
+	}
 
 	def __init__(self,data_file,target_file,err=0.01):
 		super().__init__(data_file,target_file,err=0.01)
