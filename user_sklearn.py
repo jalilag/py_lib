@@ -25,6 +25,7 @@ class Train():
 	target = None
 	err = None
 	fitted_model = None
+	model_score = None
 	fitted_red = None
 	params = None
 	cv = None
@@ -57,44 +58,19 @@ class Train():
 			self.params = model_params
 			if fixed_params is not None: self.params.update(fixed_params)
 		## Test model
-		ares = list()
+		if model_params == 'default':
+			clf = self.models_list[model]["func"]()
+		else:
+			clf = self.models_list[model]["func"](**self.params)
+		score_res = list()
 		for i in range(Niter):
 			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
-			if model_params == 'default':
-				clf = self.models_list[model]["func"]()
-			else:
-				clf = self.models_list[model]["func"](**self.params)
 			self.fitted_model = clf.fit(fmxtrain, fmytrain)
-			lres = list()
-			for j in range(Niter):
-				fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
-				print(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
-				lres.append(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
-			ares.append(n.mean(lres))
-			print(ares[-1])
-		s = 1-n.sum(n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)/len(self.target)
-		ss = n.std(1-n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)
-		print(1-n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target)
-		print("Moyenne des scores r2 =",n.mean(ares),"+-",n.std(ares))
-		print("Moyenne des écarts relatifs =",s,"+-",ss)
-		print(model)
-		## Figures
-		if with_plot:
-			plt.figure()
-			plt.subplot(211)
-			plt.plot(self.target,n.abs(self.fitted_model.predict(self.input_data)-self.target)/self.target*100,"x")
-			plt.xlabel("Target")
-			plt.ylabel("Relative uncertainty of the prediction%")
-			plt.title(model + " model" + " -> "+"{:.2%}".format(s))
-
-			plt.grid()
-			plt.subplot(212)
-			# plt.title("Model : "+model)
-			plt.plot(self.target,self.fitted_model.predict(self.input_data),"x")
-			plt.xlabel("Desired Flowrates (m3/h)")
-			plt.ylabel("Predicted Flowrates (m3/h)")
-			plt.grid()
-			plt.show()
+			score_res.append(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
+			print("Score : " + score_res[-1])
+		self.model_score = score_res[-1]
+		print("Moyenne des scores :", n.mean(score_res))
+		print("Ecart type :","+-",n.std(score_res))
 
 	def user_grid_search(self,skmod,params,max_err=0.01,n_jobs=-1):
 		"""Fonction d'optimisation des paramètres des modèles"""
@@ -195,23 +171,24 @@ class Classification(Train):
 	"f1":f1_score
 	}
 	models_list = {
-	"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000},"gamma":"auto"}},
-	"linearsvm":{"func":svm.LinearSVC,"params":{"C":{"start":0.1,"end":1000}}},
-	"nearestneighbors":{"func":NearestNeighbors,"params":{"n_neighbors":n.arange(2,100,1)}},
-	"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}},
-	"xgb":{"func":xgb.XGBClassifier,"params": 
-		{
-		"booster":["gbtree","gblinear","dart"], # gbtree
-		# "eta":{"start":0.01,"end":0.3}, # 0.3
-		"max_depth":n.arange(3,11), # 6
-		"min_child_weight":{"start":0,"end":10}, # 1 # 0
-		# "subsample":{"start":0.5,"end":1}, # 0.7
-		# "colsample_bytree": {"start":0.5,"end":1}, # 1 # 0.6
-		"objective":"binary:logistic",
-		# "gamma":{"start":0,"end":1000000}, # 0
-		# "lambda": {"start":0,"end":1000},
-		"alpha": {"start":0,"end":1000},
-		}
+		"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000},"gamma":"auto"}},
+		"linearsvm":{"func":svm.LinearSVC,"params":{"C":{"start":0.1,"end":1000}}},
+		"nearestneighbors":{"func":NearestNeighbors,"params":{"n_neighbors":n.arange(2,100,1)}},
+		"sgd":{"func":SGDClassifier,"params":{"epsilon":{"start":0.1,"end":1}}},
+		"xgb":{
+			"func":xgb.XGBClassifier,
+			"params": {
+				"booster":["gbtree","gblinear","dart"], # gbtree
+				# "eta":{"start":0.01,"end":0.3}, # 0.3
+				"max_depth":n.arange(3,11), # 6
+				"min_child_weight":{"start":0,"end":10}, # 1 # 0
+				# "subsample":{"start":0.5,"end":1}, # 0.7
+				# "colsample_bytree": {"start":0.5,"end":1}, # 1 # 0.6
+				"objective":"binary:logistic",
+				# "gamma":{"start":0,"end":1000000}, # 0
+				# "lambda": {"start":0,"end":1000},
+				"alpha": {"start":0,"end":1000},
+			}
 		}
 	}
 
