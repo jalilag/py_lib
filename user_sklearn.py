@@ -43,8 +43,8 @@ class Train():
 		if model is None or score is None: 
 			raise ValueError("Model or score method not specified")
 		model = model.lower()
-		if model not in self.models_list:
-			raise ValueError("The model specified doesn't exist : "+model)
+		if model not in self.models_list or score not in self.score_list:
+			raise ValueError("The model or score specified doesn't exist : "+ str({"model":model,"score":score}))
 		# Search best parameters
 		if model_params is None:
 			params = self.models_list[model]["params"]
@@ -67,7 +67,7 @@ class Train():
 		for i in range(Niter):
 			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
 			self.fitted_model = clf.fit(fmxtrain, fmytrain)
-			score_res.append(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
+			score_res.append(self.score_list[score](fmytest,self.fitted_model.predict(fmxtest)))
 			print("Score : " + score_res[-1])
 		self.model_score = score_res[-1]
 		self.model_mean_score = n.mean(score_res)
@@ -153,7 +153,7 @@ class Train():
 		return False
 
 class Regression(Train):
-	score = {
+	score_list = {
 	"r2":r2_score
 	}
 	models_list = {
@@ -169,7 +169,7 @@ class Regression(Train):
 		"""Constructeur"""
 
 class Classification(Train):
-	score = {
+	score_list = {
 	"accuracy":accuracy_score,
 	"f1":f1_score
 	}
