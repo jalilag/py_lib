@@ -26,6 +26,8 @@ class Train():
 	err = None
 	fitted_model = None
 	model_score = None
+	model_mean_score = None
+	model_std_score = None
 	fitted_red = None
 	params = None
 	cv = None
@@ -38,13 +40,12 @@ class Train():
 
 	def train_model(self,model=None,score=None,model_params=None,with_plot=False,Niter=10,fixed_params=None):
 		# Models
-		if model is None or score is None: return
+		if model is None or score is None: 
+			raise ValueError("Model or score method not specified")
 		model = model.lower()
-		print(model)
 		if model not in self.models_list:
-			print("The model specified doesn't exist !")
-			return
-		# Let the code find parameters
+			raise ValueError("The model specified doesn't exist : "+model)
+		# Search best parameters
 		if model_params is None:
 			params = self.models_list[model]["params"]
 			if fixed_params is not None: params.update(fixed_params)
@@ -69,8 +70,10 @@ class Train():
 			score_res.append(self.score[score](fmytest,self.fitted_model.predict(fmxtest)))
 			print("Score : " + score_res[-1])
 		self.model_score = score_res[-1]
-		print("Moyenne des scores :", n.mean(score_res))
-		print("Ecart type :","+-",n.std(score_res))
+		self.model_mean_score = n.mean(score_res)
+		self.model_std_score = n.std(score_res)
+		print("Moyenne des scores :", self.model_mean_score)
+		print("Ecart type :","+-", self.model_std_score)
 
 	def user_grid_search(self,skmod,params,max_err=0.01,n_jobs=-1):
 		"""Fonction d'optimisation des paramètres des modèles"""
