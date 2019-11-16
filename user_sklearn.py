@@ -68,7 +68,7 @@ class Train():
 			fmxtrain, fmxtest,fmytrain,fmytest = train_test_split(self.input_data,self.target,test_size=0.33, random_state=7)
 			self.fitted_model = clf.fit(fmxtrain, fmytrain)
 			score_res.append(self.score_list[score](fmytest,self.fitted_model.predict(fmxtest)))
-			print("Score : " + score_res[-1])
+			print("Score : ",score_res[-1])
 		self.model_score = score_res[-1]
 		self.model_mean_score = n.mean(score_res)
 		self.model_std_score = n.std(score_res)
