@@ -15,6 +15,18 @@ from multiprocessing import cpu_count
 import xgboost as xgb
 import pickle
 
+def user_classification_score(target,pred):
+	if len(pred) != len(target):
+		raise ValueError("Error target and pred have different size")
+	well_predicted = 0
+	for i in range(len(target)):
+		if type(target[i]) not in (int,n.int32) or type(pred[i]) not in (int,n.int32):
+			raise ValueError("Unknown type i: %s pred: %s target: %s " % (i,type(pred[i]),type(target[i]))) 
+		if target[i] == pred[i]:
+			well_predicted += 1
+	return well_predicted/len(pred)
+
+
 class Train():
 	"""Classe abstraite gérant l'entrainement et l'optimisation de model scikit-learn en regression
 
@@ -120,7 +132,7 @@ class Train():
 				print(i+" max :",j)
 		return clf
 
-	def user_score(self,target,pred):
+	def user_regression_score(self,target,pred):
 		"""Calcul de la performance de prédiction"""
 		S = 0
 		N = len(target)
@@ -171,7 +183,8 @@ class Regression(Train):
 class Classification(Train):
 	score_list = {
 	"accuracy":accuracy_score,
-	"f1":f1_score
+	"f1":f1_score,
+	"user_accuracy":user_classification_score
 	}
 	models_list = {
 		"svm": {"func":svm.SVC,"params":{"C":{"start":0.1,"end":1000},"gamma":"auto"}},
